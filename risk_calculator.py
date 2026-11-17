@@ -52,6 +52,9 @@ class CalculateurRisque:
         if facteur == "heure" and 12 in comptes.index:
             comptes = comptes.astype(float)
             comptes[12] = (comptes.get(11, 0) + comptes.get(13, 0)) / 2
+
+            total = comptes.sum()  # Recalculer le total après la modification du compte de 12h
+            
         # J'ai remarqué qu'il avait un grand pic de crimes à exactement midi, que je trouvais très anormal. Alors, on remplace le compte de 12h pour la moyenne de 11 et 13h.
 
         representatifs = comptes[comptes >= SEUIL_REPRESENTATIVITE *total]
