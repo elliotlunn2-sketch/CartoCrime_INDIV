@@ -15,6 +15,8 @@ class Resultats(ctk.CTkFrame):
         self.carte.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
 
+
+
         #texte de l'indice sur la carte
         self.indice = ctk.CTkLabel(self.carte, text="—", font=("Segoe UI", 20,), text_color="white")
         self.indice.grid(row=1, column=0, pady=(0, 25))
@@ -33,6 +35,9 @@ class Resultats(ctk.CTkFrame):
             self.onglets.add(nom)
             self._placer_figure(nom, figure)
 
+        self.onglets.add("Top 5")
+
+
     #Place les graphiques
     def _placer_figure(self, onglet, figure):
         if onglet in self.canvas:
@@ -44,7 +49,7 @@ class Resultats(ctk.CTkFrame):
 
 
     #affichage de la carte de résultats
-    def afficher(self, resultat, top, figure):
+    def afficher(self, resultat, top, figure, figure_top):
         couleur = COULEURS.get(resultat.categorie, "gray25")
         self.carte.configure(fg_color=couleur)
         self.categorie.configure(text=f"Risque {resultat.categorie}")
@@ -56,6 +61,10 @@ class Resultats(ctk.CTkFrame):
 
         self.indice.configure(text=phrase)
         self._placer_figure("Jour × heure", figure)
+        self._placer_figure("Top 5", figure_top)
         self.onglets.set("Jour × heure")
+
+    
+
         
 

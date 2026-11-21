@@ -19,7 +19,7 @@ class App (ctk.CTk):
         self.graphiques = Graphiques(donnees)
 
         #condition initiales
-        self.title("CartoCrime 1.0")
+        self.title("CartoCrime 2.0")
         self.geometry("1200x700")
         self.minsize(400, 300)
         self.grid_columnconfigure(0, weight=0)
@@ -51,9 +51,10 @@ class App (ctk.CTk):
     def analyser(self, scenario):
         try:
             resultat = self.calculateur.calculer_indice(scenario)
-            top = self.calculateur.top_crimes(scenario)
+            top, source_top = self.calculateur.top_crimes(scenario, avec_source=True)
+            figure_top = self.graphiques.top_5(top, source_top)
             figure = self.graphiques.carte_chaleur(scenario)
-            self.right_panel.afficher(resultat, top, figure)
+            self.right_panel.afficher(resultat, top, figure, figure_top)
             self.bouton_export.configure(
                 state="normal",
                 command=lambda: self.exporter_rapport(scenario, resultat, top)

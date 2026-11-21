@@ -54,7 +54,7 @@ class CalculateurRisque:
             comptes[12] = (comptes.get(11, 0) + comptes.get(13, 0)) / 2
 
             total = comptes.sum()  # Recalculer le total après la modification du compte de 12h
-            
+
         # J'ai remarqué qu'il avait un grand pic de crimes à exactement midi, que je trouvais très anormal. Alors, on remplace le compte de 12h pour la moyenne de 11 et 13h.
 
         representatifs = comptes[comptes >= SEUIL_REPRESENTATIVITE *total]
@@ -180,7 +180,7 @@ class CalculateurRisque:
 
                             #...Le top des crimes...
 
-    def top_crimes(self, scenario: dict, n: int = 5): #n est un int = 5.
+    def top_crimes(self, scenario: dict, n: int = 5, avec_source=False): #n est un int = 5.
         """Les n (pour l'instant 5) crimes les plus fréquents pour le scénario.
         Si le scénario complet donne pas assez d'incidents, on retombe sur le secteur seul."""
 
@@ -188,10 +188,19 @@ class CalculateurRisque:
         for facteur, valeur in self._valeur_du_scenario(scenario).items():
             if facteur != "secteur":
                 masque &= self.donnees[facteur] == valeur
+
         selection = self.donnees[masque]
+
+        source = "Scénario analysé"
 
         if len(selection) < MIN_INCIDENTS_TOP:
             selection = self.donnees[self.donnees["secteur"] == scenario["secteur"]]
+            source = f"Sectuer entier ({scenario['secteur']}) : moins de {MIN_INCIDENTS_TOP} incidents pour le scénario"
 
-        return selection["type_crime"].value_counts().head(n)
-# Retourne une serie pandas.
+        top = selection["type_crime"].value_counts().head(n)
+
+        if avec_source:
+            return top, source
+
+        return top
+

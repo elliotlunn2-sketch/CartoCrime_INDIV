@@ -16,6 +16,11 @@ class Graphiques:
     def par_heure(self):
         nombres = self.donnees["heure"].value_counts()
         nombres = nombres.reindex(range(24), fill_value=0)
+
+        # Corriger le pic de midi pour l'affichage.
+        nombres = nombres.astype(float)
+        nombres[12] = (nombres[11] + nombres[13]) / 2
+
         fig = Figure(figsize = (6,3))
         ax = fig.add_subplot()
         ax.bar(nombres.index, nombres.values)
@@ -49,6 +54,13 @@ class Graphiques:
             index=range(7), columns=range(24), fill_value=0
         )
 
+        # Remplacer les effectifs de 12 h par la moyenne
+        # de 11 h et 13 h pour chaque jour.
+        tableau = tableau.astype(float)
+
+        tableau[12] = (tableau[11] + tableau[13]) / 2
+
+
         fig = Figure(figsize=(9, 5))
         ax = fig.add_subplot()
         image = ax.imshow(tableau, cmap="YlOrRd", aspect="auto", vmin=0,
@@ -65,9 +77,14 @@ class Graphiques:
             cadre = Rectangle((heure - 0.5, jour - 0.5), 1, 1,
                               fill=False, edgecolor="royalblue", linewidth=3)
             ax.add_patch(cadre)
-            titre += f"\n{JOURS[jour]} à {heure} h : {tableau.loc[jour, heure]} incident(s)"
 
-        ax.set_title(f"{titre} — {len(donnees)} incident(s) au total")
+            if heure == 12:
+                titre += (f"\n{JOURS[jour]} à 12 h : "f"environ {tableau.loc[jour, heure]:.0f} incidents ""(estimation)")
+            else:
+                titre += (f"\n{JOURS[jour]} à {heure} h : "f"{int(tableau.loc[jour, heure])} incidents")
+
+
+        ax.set_title(f"{titre} — {len(donnees)} incident(s) au total (Données brutes)")
         fig.tight_layout()
         return fig
         
@@ -115,4 +132,101 @@ class Graphiques:
         ax.set_ylabel("Nombre de crimes rapportés")
         ax.set_title("Crimes rapportés selon l’âge de la victime")
         fig.tight_layout()
+        return fig
+
+# Je créer le graphique du top 5 des crimes les plus rapportés pour le scénario donné.
+    def top_5(self, top, source_top):
+        from textwrap import fill
+        from matplotlib.figure import Figure
+
+        top = top.sort_values()
+
+        # Couleurs
+        palette = {
+            1: "#3ca0f8",
+            2: "#2b87f8",
+            3: "#326ed6",
+            4: "#445c83",
+            5: "#5b6575"
+        }
+
+        # Les crimes avec le meme nombre d'incidents auront le meme rang, donc la meme couleur.
+        rangs = top.rank(ascending=False, method="min").astype(int)
+
+        couleurs = [palette[rang] for rang in rangs]
+            
+
+        fig = Figure(figsize=(10, 5.2), facecolor='#2f3136')
+        ax = fig.add_subplot()
+        ax.set_facecolor("#43464d")
+
+        # Je limite les noms des crimes à 28 caractères pour éviter que le texte ne déborde.
+        noms = [fill(nom, width=28) for nom in top.index]
+
+        barres = ax.barh(noms, top.values, color=couleurs, edgecolor="none")
+
+        # Texte
+        ax.set_xlabel(
+            "Nombre de crimes rapportés",
+            fontsize=15,
+            color="white",
+            labelpad=10)
+
+        ax.set_ylabel("")
+        
+        ax.set_title(
+            "Top 5 des crimes les plus rapportés",
+            fontsize=25,
+            color="white",
+            fontweight="bold",
+            pad=14)
+
+        # Reduire la taille des étiquettes de l'axe y et x pour éviter le chevauchement.
+        ax.tick_params(axis="y", labelsize=14, colors="white")
+        ax.tick_params(axis="x", labelsize=14, colors="white")
+
+        # Retirer certaines bordures
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_color("white")
+        ax.spines["bottom"].set_color("white")
+
+        # Quadtrllage
+        ax.grid(axis="x", linestyle="--", alpha=0.15, color="white")
+        ax.set_axisbelow(True)
+
+        # AFficher les valeurs sur les barres
+        max_val = max(top.values)
+        for barre,valeur in zip(barres, top.values):
+            ax.text(
+                valeur + max_val * 0.02,
+                barre.get_y() + barre.get_height() / 2,
+                str(valeur),
+                va="center",
+                ha="left",
+                color="white",
+                fontsize=15,
+                fontweight="bold"
+            )
+
+        # Ajuster les limites pour laisser de l'espace pour les étiquettes
+        ax.set_xlim(0, max_val * 1.15)
+
+        # Ajouter la source du top 5
+        fig.text(
+            0.5,
+            0.04,
+            f"Données utilisées pour le top 5 : {source_top}",
+            ha="center",
+            fontsize=11,
+            color="white"
+        )
+
+        # Ajuster les marges.
+        fig.subplots_adjust(
+            left=0.21,
+            right=0.95,
+            top=0.88,
+            bottom=0.20)
+
         return fig
