@@ -23,12 +23,12 @@ FACTEURS_DANS_SECTEUR = ["jour_semaine", "heure", "tranche_age", "sexe"]
 
 
 class ResultatRisque:
-    def __init__(self, indice, categorie, indices_partiels, facteur_dominant):
+    def __init__(self, indice, categorie, indices_partiels, facteur_dominant, partiels_bruts=None):
         self.indice = indice                            # Indice du risque relatif
         self.categorie = categorie                      # Catégorie de risque (faible, moyen, élevé)
         self.indices_partiels = indices_partiels        # ex "heure": 1.8, "secteur": 0.5, "age": 1.2, "sexe": 1.0
         self.facteur_dominant = facteur_dominant        # facteur qui a le plus contribué à l'indice de risque relatif
-
+        self.partiels_bruts = partiels_bruts            # Indices partiels bruts (avant normalisation)
 
     def __str__(self):
         return f"Indice: {self.indice}, Catégorie: {self.categorie}, Indices partiels: {self.indices_partiels}, Facteur dominant: {self.facteur_dominant}"
@@ -164,7 +164,8 @@ class CalculateurRisque:
             indice = round(indice,2),
             categorie = self._categorie(indice),
             indices_partiels = {f: round(v, 2) for f,v in partiels.items()},
-            facteur_dominant = dominant
+            facteur_dominant = dominant,
+            partiels_bruts = {f: max(v, 0.01) for f,v in partiels.items()}
         )
     #retourne un ResultatRisque
 

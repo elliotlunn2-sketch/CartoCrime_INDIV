@@ -37,15 +37,30 @@ class Resultats(ctk.CTkFrame):
 
         self.onglets.add("Top 5")
 
+        self.onglets.add("Comparaison")
+        self.onglets.add("Contributions")
+
+        self.message_contributions = ctk.CTkLabel(
+            self.onglets.tab("Contributions"),
+            text="",
+            font=("Segoe UI", 16),
+            wraplength=600
+        )
+
 
     #Place les graphiques
     def _placer_figure(self, onglet, figure):
         if onglet in self.canvas:
             self.canvas[onglet].get_tk_widget().destroy()
+
         canvas = FigureCanvasTkAgg(figure, master=self.onglets.tab(onglet))
         canvas.draw()
         canvas.get_tk_widget().pack(fill="both", expand=True)
+
         self.canvas[onglet] = canvas
+
+        # Rafraichir le graphique apres la mise a jour de l'interface. (La page souvrait, mais pas le graphique)
+        canvas.get_tk_widget().after_idle(canvas.draw_idle)
 
 
     #affichage de la carte de résultats
@@ -64,7 +79,61 @@ class Resultats(ctk.CTkFrame):
         self._placer_figure("Top 5", figure_top)
         self.onglets.set("Jour × heure")
 
-    
 
-        
+    def afficher_comparaison(self, comparaison, figure_indices, figure_contributions):
+        self.vider_comparaison()
 
+        indice1 = comparaison["resultat1"].indice
+        indice2 = comparaison["resultat2"].indice
+        pourcentage = comparaison["difference_pourcentage"]
+
+        self.carte.configure(fg_color="#43464d")
+
+        self.categorie.configure(
+            text="Comparaison de scénarios"
+        )
+
+        if pourcentage is not None:
+            phrase = (
+                f"Scénario 1 : {indice1:.2f}  |  "
+                f"Scénario 2 : {indice2:.2f}\n"
+                f"Variation de l'indice : {pourcentage:+.2f} %"
+            )
+        else:
+            phrase = (
+                f"Scénario 1 : {indice1:.2f}  |  "
+                f"Scénario 2 : {indice2:.2f}"
+            )
+
+        self.indice.configure(text=phrase)
+
+        # Selectionner automatiquement l'onglet de comparaison
+        self.onglets.set("Comparaison")
+
+        # Affcher le graphique qui compare.
+        self._placer_figure("Comparaison", figure_indices)
+
+        # Affciher les contributions.
+        if figure_contributions is not None:
+            self._placer_figure("Contributions", figure_contributions)
+        else:
+            self.message_contributions.configure(
+                text=comparaison["erreur_decomposition"]
+            )
+
+            self.message_contributions.pack(
+                expand=True,
+                padx=20,
+                pady=20
+            )
+
+
+
+
+    def vider_comparaison(self):
+        for onglet in ["Comparaison", "Contributions"]:
+            if onglet in self.canvas:
+                self.canvas[onglet].get_tk_widget().destroy()
+                del self.canvas[onglet]
+
+        self.message_contributions.pack_forget()

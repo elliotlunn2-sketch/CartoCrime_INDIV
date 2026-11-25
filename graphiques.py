@@ -230,3 +230,181 @@ class Graphiques:
             bottom=0.20)
 
         return fig
+
+# Graphique comparant les indices de risque de deux scénarios.
+    def comparer_indices(self, comparaison):
+        indice1 = comparaison["resultat1"].indice
+        indice2 = comparaison["resultat2"].indice
+
+        indices = [indice1, indice2]
+        noms = ["Scénario 1", "Scénario 2"]
+
+        # Couleurs des deux scenarios
+        if indice1 > indice2:
+            couleurs = ["#ef4444", "#22c55e"]
+        elif indice2 > indice1:
+            couleurs = ["#22c55e", "#ef4444"]
+        else:
+            couleurs = ["#2b87f8", "#2b87f8"]
+
+        fig = Figure(figsize=(9, 5), facecolor='#2f3136')
+        ax = fig.add_subplot()
+        ax.set_facecolor("#43464d")
+
+        # Creer les deux barres.
+        barres = ax.bar(noms, indices, color=couleurs, width=0.5)
+
+        #ligne de reference.
+        ax.axhline(
+            y=1,
+            color="#e5e7eb",
+            linestyle="--",
+            linewidth=1.5,
+            label="Indice de référence (1.00)")
+
+        ax.set_title(
+            "Comparaison des indices de risque",
+            fontsize=26,
+            color="white",
+            fontweight="bold",
+            pad=15)
+
+        ax.set_ylabel("Indice de risque relatif", fontsize=18, color="white", labelpad=15)
+        ax.tick_params(axis="both", labelsize=13, colors="white")
+
+        # Afficher les valeurs par dessus chaque barre.
+        for barre, valeur in zip(barres, indices):
+            ax.text(
+                barre.get_x() + barre.get_width() / 2,
+                valeur + 0.02,
+                f"{valeur:.2f}",
+                ha="center",
+                va="bottom",
+                fontsize=18,
+                fontweight="bold",
+                color="white"
+                )
+
+        ax.set_ylim(0, max(1, max(indices)) * 1.25)
+
+        # Grille
+        ax.grid(axis="y", linestyle="--", alpha=0.15, color="white")
+        ax.set_axisbelow(True)
+
+        # Retirer les bordures.
+        for bordure in ax.spines.values():
+            bordure.set_visible(False)
+
+        ax.legend(
+            facecolor="#43464d",
+            edgecolor="none",
+            labelcolor="white"
+        )
+
+        fig.subplots_adjust(
+            left=0.10,
+            right=0.95,
+            top=0.85,
+            bottom=0.10
+        )
+
+        return fig
+
+
+    # Affiche les contributions des facteurs a la difference.
+    def graphique_contributions(self, contributions):
+        if contributions is None:
+            raise ValueError("Les contributions sont indisponibles.")
+
+        # Meilleurs noms pour l'affichage.
+        noms_facteurs = {
+            "secteur": "Secteur",
+            "jour_semaine": "Jour",
+            "heure": "Heure",
+            "tranche_age": "Tranche d'âge",
+            "sexe": "Sexe",
+        }
+
+        facteurs = list(contributions.keys())
+        valeurs = list(contributions.values())
+
+        noms = [noms_facteurs.get(f, f) for f in facteurs]
+
+        # Bleu = augmente, rouge = diminution.
+        couleurs = []
+        for valeur in valeurs:
+            if valeur > 0:
+                couleurs.append("#16a34a")
+            elif valeur < 0:
+                couleurs.append("#dc2626")
+            else:
+                couleurs.append("#64748b")
+
+        fig = Figure(figsize=(9, 5), facecolor="#2f3136")
+        ax = fig.add_subplot()
+        ax.set_facecolor("#43464d")
+
+        barres = ax.barh(noms, valeurs, color=couleurs, height=0.6)
+
+        # Mettre un ligne a zero.
+        ax.axvline(0, color="white", linewidth=1.2)
+
+        # Met facteur le plus important en haut.
+        ax.invert_yaxis()
+
+        ax.set_title(
+            "Contribution des facteurs",
+            fontsize=25,
+            color="white",
+            fontweight="bold",
+            pad=15
+        )
+
+        ax.set_xlabel(
+            "Contribution logarithmique (×100)",
+            fontsize=16,
+            color="white",
+            labelpad=15
+        )
+
+        ax.tick_params(axis="x", labelsize=14, colors="white")
+        ax.tick_params(axis="y", labelsize=18, colors="white")
+
+        # On fait de l'espace pour les valeurs.
+        max_val = max(1, max(abs(v) for v in valeurs))
+        ax.set_xlim(-max_val * 1.3, max_val * 1.3)
+
+        # Afficher les contributions au bout des barres.
+        for barre, valeur in zip(barres, valeurs):
+            if valeur >= 0:
+                position_x = valeur + max_val * 0.03
+                alignement = "left"
+            else:
+                position_x = valeur - max_val * 0.03
+                alignement = "right"
+
+            ax.text(
+                position_x,
+                barre.get_y() + barre.get_height() / 2,
+                f"{valeur:+.2f}",
+                ha=alignement,
+                va="center",
+                fontsize=14,
+                fontweight="bold",
+                color="white"
+                )
+
+        ax.grid(axis="x", linestyle="--", alpha=0.15, color="white")
+        ax.set_axisbelow(True)
+
+        for bordure in ax.spines.values():
+            bordure.set_visible(False)
+
+        fig.subplots_adjust(
+                    left=0.12,
+                    right=0.95,
+                    top=0.85,
+                    bottom=0.15
+                )
+
+        return fig
